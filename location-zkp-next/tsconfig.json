@@ -21,13 +21,19 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "baseUrl": ".",  // Added baseUrl for resolving paths
+    "paths": {       // Added paths for alias support
+      "@/*": ["src/*"]
+    }
   },
   "include": [
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "**/*.js",     // Added support for .js files
+    "**/*.jsx"     // Added support for .jsx files
   ],
   "exclude": [
     "node_modules"

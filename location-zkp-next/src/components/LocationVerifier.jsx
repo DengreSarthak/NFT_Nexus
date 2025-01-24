@@ -79,45 +79,52 @@ function LocationVerifierContent() {
     try {
       setStatus("getting-location");
       setError(null);
-
+   
       const location = await LocationService.getCurrentPosition();
-
+      console.log("Current location:", location);
+   
       setStatus("generating-proof");
       const input = {
         latitude: Math.floor(location.latitude * 100),
         longitude: Math.floor(location.longitude * 100),
-        minLatitude: 10 * 100,
-        maxLatitude: 50 * 100,
-        minLongitude: 70 * 100,
-        maxLongitude: 90 * 100,
+        minLatitude: 1280,  // Bangalore coordinates
+        maxLatitude: 1320, 
+        minLongitude: 7740,
+        maxLongitude: 7780
       };
-
-      const { proof, publicSignals } = await generateProof(input);
-      const verificationResult = await verifyProof(proof, publicSignals);
-
-      if (verificationResult.verified) {
-        console.log(
-          `User successfully verified for group: ${groupName} (ID: ${groupId})`
-        );
-        setProofData({
-          proof: {
-            pi_a: proof.pi_a.slice(0, -1),
-            pi_b: proof.pi_b.slice(0, -1),
-            pi_c: proof.pi_c.slice(0, -1),
-          },
-          publicSignals,
-          verificationResult,
-        });
-        setStatus("success");
-      } else {
-        throw new Error("Verification failed.");
+  
+   
+      try {
+        const { proof, publicSignals } = await generateProof(input);
+        console.log(publicSignals);
+        const verificationResult = await verifyProof(proof, publicSignals);
+   
+        if (verificationResult.verified) {
+          console.log(
+            `User successfully verified for group: ${groupName} (ID: ${groupId})`
+          );
+          setProofData({
+            proof: {
+              pi_a: proof.pi_a.slice(0, -1),
+              pi_b: proof.pi_b.slice(0, -1),
+              pi_c: proof.pi_c.slice(0, -1),
+            },
+            publicSignals,
+            verificationResult,
+          });
+          setStatus("success");
+        } else {
+          throw new Error("You are not in the specified location zone");
+        }
+      } catch (err) {
+        throw new Error("Location verification failed - You must be physically present in the to verify");
       }
     } catch (err) {
       console.error("Location error:", err);
       setError(err.message);
       setStatus("error");
     }
-  };
+   };
 
   return (
     <motion.div
