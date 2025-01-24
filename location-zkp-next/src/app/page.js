@@ -2,7 +2,6 @@
 //import { LocationVerifier } from '@/components/LocationVerifier' 
 import {Hero} from '@/components/Hero'
 import { Header } from '@/components/Header'
-import { GlobeDemo } from './components/Globe'
 
 export default function Home() {
   return (
