@@ -1,19 +1,13 @@
 "use client";
-import { motion, useScroll, useTransform } from "framer-motion";
-import Button from "@/components/Button";
-import StarsBg from "@/assets/stars.png";
-//import LogoImg from '@/assets/nexusLogo.png' // Updated logo for Nexus
-import { useRef } from "react";
-import Link from "next/link";
+import React from "react";
+import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 
-const World = dynamic(
-  () => import("@/components/ui/globe").then((m) => m.World),
-  {
-    ssr: false,
-  }
-);
-export const Hero = () => {
+const World = dynamic(() => import("../../components/ui/globe").then((m) => m.World), {
+  ssr: false,
+});
+
+export function GlobeDemo() {
   const globeConfig = {
     pointSize: 4,
     globeColor: "#062056",
@@ -400,90 +394,40 @@ export const Hero = () => {
     },
   ];
 
-  const sectionRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-  const backgroundPositionY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [-300, 300]
-  );
-
   return (
-    <motion.section
-      ref={sectionRef}
-      className="h-screen flex items-center overflow-visible relative [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)]"
-      style={{
-        backgroundImage: `url(${StarsBg.src})`,
-        backgroundPositionY: backgroundPositionY,
-        backgroundSize: "cover",
-      }}
-      animate={{
-        backgroundPositionX: StarsBg.width,
-      }}
-      transition={{
-        repeat: Infinity,
-        ease: "linear",
-        duration: 120,
-      }}
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(90%_300%_at_50%_50%,rgba(68,114,196,0.2)_0%,transparent_50%)]"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(68,114,196,0.15)_0%,transparent_60%)]"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(40%_40%_at_50%_100%,rgba(68,114,196,0.1)_0%,transparent_70%)]"></div>
-
-      {/* First Rotating Circle */}
-      <motion.div
-        style={{
-          translateX: "-50%",
-          translateY: "-50%",
-        }}
-        animate={{
-          rotate: ["0deg", "360deg"],
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 60,
-          ease: "linear",
-        }}
-        className="absolute h-[500px] w-[500px] sm:h-[700px] sm:w-[700px] md:h-[900px] md:w-[900px] lg:h-[1100px] lg:w-[1100px] rounded-full border border-dashed border-blue-500 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-      ></motion.div>
-
-      {/* Second Rotating Circle */}
-      <motion.div
-        style={{
-          translateX: "-50%",
-          translateY: "-50%",
-        }}
-        animate={{
-          rotate: "1turn",
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 60,
-          ease: "linear",
-        }}
-        className="absolute h-[600px] w-[600px] sm:h-[800px] sm:w-[800px] md:h-[1000px] md:w-[1000px] lg:h-[1200px] lg:w-[1200px] rounded-full border border-blue-400 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-      ></motion.div>
-
-      <div className="container relative text-center">
-        <p className="font-caudex text-4xl max-w-xl mx-auto text-blue-300 mb-5 tracking-tight italic">
-          NEXUS
-        </p>
-        <div className="w-[200] -bottom-20 h-[200] z-10">
+    (<div
+      className="flex flex-row items-center justify-center py-20 h-screen md:h-auto dark:bg-black bg-white relative w-full">
+      <div
+        className="max-w-7xl mx-auto w-full relative overflow-hidden h-full md:h-[40rem] px-4">
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 1,
+          }}
+          className="div">
+          <h2
+            className="text-center text-xl md:text-4xl font-bold text-black dark:text-white">
+            We sell soap worldwide
+          </h2>
+          <p
+            className="text-center text-base md:text-lg font-normal text-neutral-700 dark:text-neutral-200 max-w-md mt-2 mx-auto">
+            This globe is interactive and customizable. Have fun with it, and
+            don&apos;t forget to share it. :)
+          </p>
+        </motion.div>
+        <div
+          className="absolute w-full bottom-0 inset-x-0 h-40 bg-gradient-to-b pointer-events-none select-none from-transparent dark:to-black to-white z-40" />
+        <div className="absolute w-full -bottom-20 h-72 md:h-full z-10">
           <World data={sampleArcs} globeConfig={globeConfig} />
-        </div>{" "}
-        <p className="font-caudex text-4xl max-w-2xl mx-auto text-blue-400 mt-5 tracking-tight">
-          Mint NFTs securely based on your location, powered by zero-knowledge
-          proofs
-        </p>
-        <div className="flex justify-center mt-7">
-          <Link href="/groups">
-            <Button>Explore Nexus</Button>
-          </Link>
         </div>
       </div>
-    </motion.section>
+    </div>)
   );
-};
+}
