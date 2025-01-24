@@ -7,49 +7,47 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import ThemeButton from "../common/theme-button";
 import RainbowBorder from "../common/rainbow-border";
 import Image from "next/image";
 import Info from "../common/info";
-import { useAccount } from "wagmi";
 import { useToast } from "@/app/hooks/use-toast";
-
-
+import NexusLogo from "@/assets/nexuslogo.png"; // Import Nexus logo
 
 export default function PlayableMap() {
-  // Static data memoization remains the same
-  // const { address } = useAccount();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  // console.log(address);
+
+  // Static data for other users
   const users = useMemo<User[]>(
     () => [
       {
         id: "1",
-        latitude: 13.719483,
-        longitude: 100.558878,
+        latitude: 26.92207,
+        longitude: 75.778885,
         name: "Alice",
         avatarUrl: "/ppgorilla@2x.png",
       },
       {
         id: "2",
-        latitude: 13.722651,
-        longitude: 100.555686,
+        latitude: 26.917682,
+        longitude: 75.785522,
         name: "Bob",
         avatarUrl: "/pplion@2x.png",
       },
     ],
     []
   );
+
+  // Token markers for Jaipur
   const tokens = useMemo<Token[]>(
     () => [
       {
         id: "1",
-        latitude: 13.723399239281363,
-        longitude: 100.5596624914665,
+        latitude: 26.9124,
+        longitude: 75.7873,
         symbol: "EME",
         name: "Emerald",
         logoUrl: "/game-assets/token-pic.png",
@@ -57,8 +55,8 @@ export default function PlayableMap() {
       },
       {
         id: "2",
-        latitude: 13.723239281363,
-        longitude: 100.55939609285565,
+        latitude: 26.9151,
+        longitude: 75.8104,
         symbol: "RUB",
         name: "Ruby",
         logoUrl: "/game-assets/token-pic.png",
@@ -66,8 +64,8 @@ export default function PlayableMap() {
       },
       {
         id: "3",
-        latitude: 13.724370340244306,
-        longitude: 100.55871527244722,
+        latitude: 26.9121,
+        longitude: 75.7777,
         symbol: "SHIB",
         name: "Shiba",
         logoUrl: "/game-assets/token-pic.png",
@@ -75,8 +73,8 @@ export default function PlayableMap() {
       },
       {
         id: "4",
-        latitude: 13.725185750901844,
-        longitude: 100.5596624914665,
+        latitude: 26.9168,
+        longitude: 75.7936,
         symbol: "PEN",
         name: "Pengu",
         logoUrl: "/game-assets/token-pic.png",
@@ -86,40 +84,30 @@ export default function PlayableMap() {
     []
   );
 
+  // Crate locations (if needed)
   const crates = useMemo<Crate[]>(
     () => [
       {
         id: "1",
-        latitude: 13.726441,
-        longitude: 100.55939609285565,
+        latitude: 26.9180,
+        longitude: 75.7989,
       },
       {
         id: "2",
-        latitude: 13.719329060891909,
-        longitude: 100.55925650453594,
-      },
-      {
-        id: "3",
-        latitude: 13.732957904317544,
-        longitude: 100.55375898660088,
-      },
-
-      {
-        id: "4",
-        latitude: 13.725272324476776,
-        longitude: 100.5544596285639,
+        latitude: 26.9119,
+        longitude: 75.8033,
       },
     ],
     []
   );
 
-  // State management
+  // State for current user location
   const [currentUser, setCurrentUser] = useState<User>({
     id: "current",
     latitude: 0,
     longitude: 0,
     name: "You",
-    avatarUrl: "/game-assets/pp-dog.png",
+    avatarUrl: NexusLogo.src, // Use Nexus logo
   });
 
   const [modalState, setModalState] = useState({
@@ -127,7 +115,7 @@ export default function PlayableMap() {
     selectedItem: null as User | Token | null,
   });
 
-  // Memoized handlers
+  // Handlers for markers
   const handleUserClick = useCallback((user: User) => {
     setModalState({
       isOpen: true,
@@ -149,26 +137,23 @@ export default function PlayableMap() {
     });
   }, []);
 
-  // Geolocation effect
+  // Fetch and update current user location
   useEffect(() => {
     if (!navigator.geolocation) return;
 
-    const successHandler = (position: GeolocationPosition) => {
-      setCurrentUser((prev: any) => ({
-        ...prev,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      }));
-    };
-
-    const errorHandler = (error: GeolocationPositionError) => {
-      console.error("Error retrieving geolocation:", error);
-    };
-
-    navigator.geolocation.getCurrentPosition(successHandler, errorHandler);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCurrentUser((prev: User) => ({
+          ...prev,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }));
+      },
+      (error) => console.error("Error retrieving geolocation:", error)
+    );
   }, []);
 
-  // Memoize MapComponent props
+  // Map props
   const mapProps = useMemo(
     () => ({
       tokens,
@@ -193,7 +178,6 @@ export default function PlayableMap() {
           },
           body: JSON.stringify({
             questId: "12",
-            // walletAddress: address,
             location: {
               longitude: currentUser.longitude,
               latitude: currentUser.latitude,
@@ -252,7 +236,7 @@ export default function PlayableMap() {
 
       <Dialog
         open={modalState.isOpen}
-        onOpenChange={(open : any) => !open && handleModalClose()}
+        onOpenChange={(open: boolean) => !open && handleModalClose()}
       >
         <DialogContent className="bg-transparent border-none">
           <DialogTitle className="sr-only">
@@ -261,100 +245,27 @@ export default function PlayableMap() {
           <div className="mb-4">
             {modalState.selectedItem && (
               <div className="space-y-4">
-                {"avatarUrl" in modalState.selectedItem && (
-                  <RainbowBorder>
-                    <div className="w relative rounded-lg bg-purple-800 overflow-hidden flex flex-col items-center justify-between gap-y-2 py-[11px] px-3 max-w-full max-h-full text-left text-13xl text-primary  ">
-                      <h1 className="m-0 self-stretch relative text-inherit font-semibold  ">
-                        {modalState.selectedItem.name}
-                      </h1>
-                      <Image
-                        className="size-46 rounded-[3000px] overflow-hidden shrink-0 object-cover"
-                        alt={`${modalState.selectedItem.name}'s profile picture`}
-                        src={modalState.selectedItem.avatarUrl}
-                        width={500}
-                        height={500}
-                      />
-                      <h3 className="m-0 relative text-5xl font-semibold  ">
-                        Building in web3, catching all the tokens.
-                      </h3>
-                      <div className="flex flex-row items-center justify-center gap-1 text-base">
-                        <div className="flex flex-row items-center justify-center py-2 px-[29px]">
-                          <DialogClose className="relative inline-block min-w-[37px] data-[state=open]:ring-none">
-                            Back
-                          </DialogClose>
-                        </div>
-                        <ThemeButton
-                          text="Send Request"
-                          defaultPadding="8px 16px"
-                          defaultGap="2px"
-                          tablerIconBrandX="/tablericonhearthandshake1.svg"
-                          tablerIconBrandXWidth="24px"
-                          brandLabelHeight="21px"
-                          brandLabelDisplay="inline-block"
-                          brandLabelFontSize="14px"
-                          brandLabelWidth="unset"
-                        />
-                      </div>
-                    </div>
-                  </RainbowBorder>
-                )}
                 {"logoUrl" in modalState.selectedItem && (
                   <RainbowBorder>
                     <div className="pb-4">
                       <Info
                         tokenImage="/tokenpic1.svg"
-                        tokenName="TokenName"
-                        tokenType="meme"
-                        timeAgo="h"
+                        tokenName={modalState.selectedItem.name}
+                        tokenType={modalState.selectedItem.symbol}
                         description={[
-                          "📧 Link your Gmail - it's how we know it's really you!",
-                          "🎯 Get your first 5 transactions under your belt",
-                          "🔄 Try out a token swap - it's easier than you think!",
+                          "📧 Connect your wallet.",
+                          "🎯 Claim rewards now!",
                         ]}
-                        rewardAmount="1000"
-                        rewardSymbol="$TKN1"
-                        className="custom-class py-4"
+                        rewardAmount="500"
+                        rewardSymbol="$NEX"
                       />
-                      <div className="self-stretch rounded-lg bg-purple-600 flex flex-row items-center justify-start p-[0.75rem]">
-                        <h1 className="m-0 relative text-[1.5rem] font-semibold   text-thistle text-left">
-                          Paste X url or transaction
-                        </h1>
-                      </div>
-                    </div>
-                    <div className="self-stretch flex flex-row items-center justify-end flex-wrap content-center gap-[1rem]">
-                      <div onClick={isLoading ? undefined : handleClaim}>
+                      <div className="self-stretch flex justify-end mt-4">
                         <ThemeButton
                           btn="large"
-                          text={isLoading ? "Claiming..." : "Claim"}
-                          defaultFlex="1"
-                          defaultHeight="2.5rem"
-                          defaultPadding="0.5rem 1rem"
-                          defaultGap="0.125rem"
-                          tablerIconBrandX="/vector.svg"
-                          tablerIconBrandXHeight="1.5rem"
-                          tablerIconBrandXWidth="1.5rem"
-                          brandLabelHeight="unset"
-                          brandLabelDisplay="unset"
-                          brandLabelFontSize="1rem"
-                          brandLabelWidth="unset"
+                          text="Claim"
+                          onClick={handleClaim}
                         />
                       </div>
-
-                      <ThemeButton
-                        btn="large"
-                        text="Go to Task"
-                        defaultFlex="1"
-                        defaultHeight="2.5rem"
-                        defaultPadding="0.5rem 1rem"
-                        defaultGap="0.125rem"
-                        tablerIconBrandX="/tablericonexternallink.svg"
-                        tablerIconBrandXHeight="1.5rem"
-                        tablerIconBrandXWidth="1.5rem"
-                        brandLabelHeight="unset"
-                        brandLabelDisplay="unset"
-                        brandLabelFontSize="1rem"
-                        brandLabelWidth="unset"
-                      />
                     </div>
                   </RainbowBorder>
                 )}
