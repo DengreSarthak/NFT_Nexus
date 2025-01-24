@@ -3,37 +3,23 @@
 import mapboxgl from "mapbox-gl";
 import { useRef, useEffect } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { Token, Crate, User } from "@/types/types";
-import {
-  createCrateMarker,
-  createPlayerMarker,
-  createTokenMarker,
-  createUserMarker,
-} from "@/utlis/markers";
+import { Token, User } from "@/types/types";
+import { createTokenMarker } from "@/utlis/markers";
 
 interface MapComponentProps {
   tokens: Token[];
-  crates: Crate[];
-  users: User[];
   currentUser: User;
   onTokenClick?: (token: Token) => void;
-  onUserClick?: (user: User) => void;
 }
 
 export default function MapComponent({
   tokens,
-  crates,
-  users,
   currentUser,
   onTokenClick,
-  onUserClick,
 }: MapComponentProps) {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const currentUserMarkerRef = useRef<mapboxgl.Marker | null>(null);
-  const userMarkersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
   const tokenMarkersRef = useRef<mapboxgl.Marker[]>([]);
-  const crateMarkersRef = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
@@ -44,51 +30,26 @@ export default function MapComponent({
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 
     if (!mapRef.current) {
+      // Initialize Mapbox
       mapRef.current = new mapboxgl.Map({
         container: mapContainerRef.current!,
-        zoom: 18,
-        pitch: 60,
-        bearing: 0,
-        attributionControl: false,
-        projection: "globe",
-        logoPosition: "top-left",
+        style: "mapbox://styles/mapbox/streets-v11",
+        center: [currentUser.longitude, currentUser.latitude],
+        zoom: 15,
       });
 
-      // Create current user marker with click handler
-      const currentUserElement = createPlayerMarker(currentUser);
-      if (onUserClick) {
-        currentUserElement.addEventListener("click", () =>
-          onUserClick(currentUser)
-        );
-      }
+      // Add the current user's location marker
+      const userMarker = new mapboxgl.Marker({
+        color: "#FF0000", // Red for current user
+      })
+        .setLngLat([currentUser.longitude, currentUser.latitude])
+        .addTo(mapRef.current!);
 
-      currentUserMarkerRef.current = new mapboxgl.Marker({
-        element: currentUserElement,
-        anchor: "center",
-      });
-
-      // Create markers for other users with click handlers
-      users.forEach((user) => {
-        if (user.id !== currentUser.id) {
-          const userElement = createUserMarker(user);
-          if (onUserClick) {
-            userElement.addEventListener("click", () => onUserClick(user));
-          }
-
-          const marker = new mapboxgl.Marker({
-            element: userElement,
-            anchor: "center",
-          })
-            .setLngLat([user.longitude, user.latitude])
-            .addTo(mapRef.current!);
-
-          userMarkersRef.current[user.id] = marker;
-        }
-      });
-
-      // Create token markers with click handlers
+      // Add token markers
       tokens.forEach((token) => {
         const tokenElement = createTokenMarker(token);
+
+        // Attach click event if provided
         if (onTokenClick) {
           tokenElement.addEventListener("click", () => onTokenClick(token));
         }
@@ -102,98 +63,30 @@ export default function MapComponent({
 
         tokenMarkersRef.current.push(marker);
       });
-
-      // Create crate markers
-      crates.forEach((crate) => {
-        const marker = new mapboxgl.Marker({
-          element: createCrateMarker(),
-          anchor: "center",
-        })
-          .setLngLat([crate.longitude, crate.latitude])
-          .setPopup(
-            new mapboxgl.Popup({
-              closeOnMove: true,
-              className: "text-black",
-            }).setHTML(`<h3>hoho</h3>`)
-          )
-          .addTo(mapRef.current!);
-
-        crateMarkersRef.current.push(marker);
-      });
     }
 
-    // Get and watch current user location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const newLocation: [number, number] = [longitude, latitude];
-
-          mapRef.current?.flyTo({
-            center: newLocation,
-            zoom: 16,
-            essential: true,
-          });
-
-          currentUserMarkerRef.current
-            ?.setLngLat(newLocation)
-            .addTo(mapRef.current!);
-        },
-        (error) => console.error("Error getting location:", error)
-      );
-
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const newLocation: [number, number] = [longitude, latitude];
-
-          if (currentUserMarkerRef.current) {
-            currentUserMarkerRef.current.setLngLat(newLocation);
-          }
-
-          mapRef.current?.easeTo({
-            center: newLocation,
-            duration: 1000,
-          });
-        },
-        (error) => console.error("Error watching position:", error),
-        {
-          enableHighAccuracy: true,
-          maximumAge: 1000,
-          timeout: 5000,
-        }
-      );
-
-      return () => {
-        navigator.geolocation.clearWatch(watchId);
-        if (mapRef.current) {
-          mapRef.current.remove();
-          mapRef.current = null;
-        }
-        currentUserMarkerRef.current?.remove();
-        Object.values(userMarkersRef.current).forEach((marker) =>
-          marker.remove()
-        );
-        userMarkersRef.current = {};
-        tokenMarkersRef.current.forEach((marker) => marker.remove());
-        tokenMarkersRef.current = [];
-        crateMarkersRef.current.forEach((marker) => marker.remove());
-        crateMarkersRef.current = [];
-      };
-    }
-  }, [tokens, crates, users, currentUser, onTokenClick, onUserClick]);
+    // Cleanup on unmount
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      tokenMarkersRef.current.forEach((marker) => marker.remove());
+      tokenMarkersRef.current = [];
+    };
+  }, [tokens, currentUser, onTokenClick]);
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden">
+    <div className="relative w-full h-screen">
       <style jsx global>{`
-        .mapboxgl-control-container {
-          display: none !important;
-        }
-        .mapboxgl-canvas {
-          cursor: default !important;
+        .mapboxgl-marker {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 10;
         }
       `}</style>
       <div ref={mapContainerRef} className="absolute inset-0 w-full h-full" />
-    </main>
+    </div>
   );
 }
